@@ -1,0 +1,64 @@
+# .gitlab-ci.yml
+stages:
+  - check
+  - build
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  NODE_OPTIONS: "--max-old-space-size=4096"
+
+# 缓存 Maven 和 npm 依赖
+cache:
+  paths:
+    - .m2/repository/
+    - frontend/node_modules/
+
+backend-checkstyle:
+  stage: check
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - cd backend
+    - mvn checkstyle:check
+  only:
+    changes:
+      - backend/**/*
+  except:
+    - tags
+
+backend-compile:
+  stage: build
+  image: maven:3.9-eclipse-temurin-17
+  script:
+    - cd backend
+    - mvn compile
+  only:
+    changes:
+      - backend/**/*
+  except:
+    - tags
+
+frontend-lint:
+  stage: check
+  image: node:20
+  script:
+    - cd frontend
+    - npm ci
+    - npm run lint
+  only:
+    changes:
+      - frontend/**/*
+  except:
+    - tags
+
+frontend-build:
+  stage: build
+  image: node:20
+  script:
+    - cd frontend
+    - npm ci
+    - npm run build
+  only:
+    changes:
+      - frontend/**/*
+  except:
+    - tags
